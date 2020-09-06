@@ -1,0 +1,27 @@
+name: release
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Generate Dockerfile
+        id: generate
+        run: ./gen.sh
+      - name: Commit files
+        run: |
+          git config --local user.email "yasuyuki.ymd@gmail.com"
+          git config --local user.name "Yasuyuki YAMADA"
+          git commit -a -m "[auto] Generate Dockerfile" || echo "no changes"
+          git tag -f -a ${tag_name} -m "${tag_name} Tagged by CI"
+        env:
+          tag_name: ${{ steps.generate.outputs.version }}
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
