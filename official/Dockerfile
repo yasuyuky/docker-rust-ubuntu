@@ -1,1 +1,1 @@
-FROM rust:1.46.0-buster
+FROM rust:1.47.0-buster
