@@ -27,3 +27,11 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           force: true
           tags: true
+      - name: Build and push the docker image to ghcr.io
+        run: |
+          echo $CR_PAT | docker login ghcr.io -u yasuyuky --password-stdin
+          docker build . -t ghcr.io/yasuyuky/rust-ubuntu:latest -t ghcr.io/yasuyuky/rust-ubuntu:$TAGNAME
+          docker push -a ghcr.io/yasuyuky/rust-ubuntu
+        env:
+          CR_PAT: ${{ secrets.CR_PAT }}
+          TAGNAME: ${{ steps.generate.outputs.version }}
