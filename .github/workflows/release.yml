@@ -8,19 +8,27 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [bionic, focal, jammy]
     steps:
       - uses: actions/checkout@v1
       - name: Generate Dockerfile
         id: generate
-        run: ./gen.sh
+        run: ./gen.sh ${{ matrix.os }}/Dockerfile.template
       - name: Commit files
         run: |
           git config --local user.email "yasuyuki.ymd@gmail.com"
           git config --local user.name "Yasuyuki YAMADA"
           git commit -a -m "[auto] Generate Dockerfile" || echo "no changes"
-          git tag -f -a ${tag_name} -m "${tag_name} Tagged by CI"
+          # for backward compatibility
+          if [ "$os" = bionic ] ; then
+              git tag -f -a ${tag_name} -m "${tag_name} Tagged by CI"
+          fi
+          git tag -f -a ${os}-${tag_name} -m "${os}-${tag_name} Tagged by CI"
         env:
           tag_name: ${{ steps.generate.outputs.version }}
+          os: ${{ matrix.os }}
       - name: Push changes
         uses: ad-m/github-push-action@master
         with:
@@ -29,9 +37,16 @@ jobs:
           tags: true
       - name: Build and push the docker image to ghcr.io
         run: |
+          cd ${{ matrix.os }}
           echo $CR_PAT | docker login ghcr.io -u yasuyuky --password-stdin
-          docker build . -t ghcr.io/yasuyuky/rust-ubuntu:latest -t ghcr.io/yasuyuky/rust-ubuntu:$TAGNAME
+          docker build . -t ghcr.io/yasuyuky/rust-ubuntu:$TAGNAME
+          # for backward compatibility
+          if [ "$os" = bionic ] ; then
+              docker tag ghcr.io/yasuyuky/rust-ubuntu:$TAGNAME ghcr.io/yasuyuky/rust-ubuntu:latest
+              docker tag ghcr.io/yasuyuky/rust-ubuntu:$TAGNAME ghcr.io/yasuyuky/rust-ubuntu:$VERSION
+          fi
           docker push -a ghcr.io/yasuyuky/rust-ubuntu
         env:
           CR_PAT: ${{ secrets.CR_PAT }}
-          TAGNAME: ${{ steps.generate.outputs.version }}
+          VERSION: ${{ steps.generate.outputs.version }}
+          TAGNAME: ${{ matrix.os }}-${{ steps.generate.outputs.version }}
