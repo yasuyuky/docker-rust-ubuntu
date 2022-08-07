@@ -1,4 +1,6 @@
-FROM buildpack-deps:bionic
+ARG dist
+
+FROM buildpack-deps:${dist}
 
 ENV RUSTUP_HOME=/usr/local/rustup \
     CARGO_HOME=/usr/local/cargo \
