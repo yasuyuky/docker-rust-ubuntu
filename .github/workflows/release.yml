@@ -25,11 +25,6 @@ jobs:
           git config --local user.email "yasuyuki.ymd@gmail.com"
           git config --local user.name "Yasuyuki YAMADA"
           git commit -a -m "[auto] Generate Dockerfile" || echo "no changes"
-          # for backward compatibility
-          if [ "$os" = bionic ] ; then
-              git tag -f -a ${tag_name} -m "${tag_name} Tagged by CI"
-          fi
-          git tag -f -a ${os}-${tag_name} -m "${os}-${tag_name} Tagged by CI"
         env:
           tag_name: ${{ steps.generate.outputs.version }}
           os: ${{ matrix.os }}
