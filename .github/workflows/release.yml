@@ -5,6 +5,10 @@ on:
     branches:
       - main
 
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: rust-ubuntu
+
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -21,11 +25,6 @@ jobs:
           git config --local user.email "yasuyuki.ymd@gmail.com"
           git config --local user.name "Yasuyuki YAMADA"
           git commit -a -m "[auto] Generate Dockerfile" || echo "no changes"
-          # for backward compatibility
-          if [ "$os" = bionic ] ; then
-              git tag -f -a ${tag_name} -m "${tag_name} Tagged by CI"
-          fi
-          git tag -f -a ${os}-${tag_name} -m "${os}-${tag_name} Tagged by CI"
         env:
           tag_name: ${{ steps.generate.outputs.version }}
           os: ${{ matrix.os }}
@@ -35,18 +34,27 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           force: true
           tags: true
-      - name: Build and push the docker image to ghcr.io
-        run: |
-          cd ${{ matrix.os }}
-          echo $CR_PAT | docker login ghcr.io -u yasuyuky --password-stdin
-          docker build . -t ghcr.io/yasuyuky/rust-ubuntu:$TAGNAME
-          # for backward compatibility
-          if [ "$os" = bionic ] ; then
-              docker tag ghcr.io/yasuyuky/rust-ubuntu:$TAGNAME ghcr.io/yasuyuky/rust-ubuntu:latest
-              docker tag ghcr.io/yasuyuky/rust-ubuntu:$TAGNAME ghcr.io/yasuyuky/rust-ubuntu:$VERSION
-          fi
-          docker push -a ghcr.io/yasuyuky/rust-ubuntu
-        env:
-          CR_PAT: ${{ secrets.CR_PAT }}
-          VERSION: ${{ steps.generate.outputs.version }}
-          TAGNAME: ${{ matrix.os }}-${{ steps.generate.outputs.version }}
+      - name: Log in to the Container registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          push: true
+          build-args: dist=${{ matrix.os }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ matrix.os }}-${{ steps.generate.outputs.version }}
+      - name: Build and push latest if bionic
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          push: true
+          build-args: dist=${{ matrix.os }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:latest
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ steps.generate.outputs.version }}
+        if: ${{ matrix.os == 'bionic' }}
