@@ -40,17 +40,21 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build and push the docker image to ghcr.io
-        run: |
-          cd ${{ matrix.os }}
-          docker build . -t ghcr.io/yasuyuky/rust-ubuntu:$TAGNAME
-          # for backward compatibility
-          if [ "$os" = bionic ] ; then
-              docker tag ghcr.io/yasuyuky/rust-ubuntu:$TAGNAME ghcr.io/yasuyuky/rust-ubuntu:latest
-              docker tag ghcr.io/yasuyuky/rust-ubuntu:$TAGNAME ghcr.io/yasuyuky/rust-ubuntu:$VERSION
-          fi
-          docker push -a ghcr.io/yasuyuky/rust-ubuntu
-        env:
-          CR_PAT: ${{ secrets.CR_PAT }}
-          VERSION: ${{ steps.generate.outputs.version }}
-          TAGNAME: ${{ matrix.os }}-${{ steps.generate.outputs.version }}
+      - name: Build and push
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          push: true
+          build-args: dist=${{ matrix.os }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ matrix.os }}-${{ steps.generate.outputs.version }}
+      - name: Build and push latest if bionic
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          push: true
+          build-args: dist=${{ matrix.os }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:latest
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ steps.generate.outputs.version }}
+        if: ${{ matrix.os == 'bionic' }}
