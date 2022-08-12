@@ -34,6 +34,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           force: true
           tags: true
+        if: ${{ matrix.os == 'bionic' }}
       - name: Log in to the Container registry
         uses: docker/login-action@v2
         with:
