@@ -13,3 +13,5 @@ RUN set -eux; \
     rustup --version; \
     cargo --version; \
     rustc --version;
+
+RUN cargo install sccache cargo-deb && rm -rf /usr/local/cargo/registry/*
