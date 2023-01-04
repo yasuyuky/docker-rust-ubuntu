@@ -14,4 +14,4 @@ RUN set -eux; \
     cargo --version; \
     rustc --version;
 
-RUN cargo install sccache cargo-deb && rm -rf /usr/local/cargo/registry/*
+RUN --mount=type=tmpfs,target=/usr/local/cargo/registry/ cargo install sccache cargo-deb && rm -rf /usr/local/cargo/registry/*
