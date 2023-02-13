@@ -35,6 +35,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           force_with_lease: true
           tags: true
+          branch: ${{ github.ref }}
         if: ${{ matrix.os == 'bionic' }}
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
