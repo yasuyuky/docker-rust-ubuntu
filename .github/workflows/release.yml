@@ -17,6 +17,8 @@ jobs:
         os: [bionic, focal, jammy]
     steps:
       - uses: actions/checkout@v1
+        with:
+          ref: ${{ github.head_ref }}
       - name: Generate Dockerfile
         id: generate
         run: ./gen.sh ${{ matrix.os }}/Dockerfile.template
