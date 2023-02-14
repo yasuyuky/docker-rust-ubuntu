@@ -42,8 +42,6 @@ jobs:
           tags: true
           branch: ${{ github.ref }}
         if: ${{ matrix.os == 'bionic' && matrix.platform == 'linux/amd64' }}
-      - name: Expose GitHub Runtime
-        uses: crazy-max/ghaction-github-runtime@v2
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
@@ -72,8 +70,6 @@ jobs:
     needs: release
     steps:
       - uses: actions/checkout@v1
-      - name: Expose GitHub Runtime
-        uses: crazy-max/ghaction-github-runtime@v2
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
