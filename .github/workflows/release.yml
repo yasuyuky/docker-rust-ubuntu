@@ -59,8 +59,8 @@ jobs:
         with:
           context: .
           push: false
-          cache-from: gha
-          cache-to: gha
+          cache-from: type=gha
+          cache-to: type=gha
           platforms: ${{ matrix.platform }}
           build-args: dist=${{ matrix.os }}
 
@@ -89,7 +89,7 @@ jobs:
         with:
           context: .
           push: true
-          cache-from: gha
+          cache-from: type=gha
           platforms: linux/amd64,linux/arm64,linux/arm/v7
           build-args: dist=${{ matrix.os }}
           tags: |
