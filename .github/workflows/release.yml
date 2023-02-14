@@ -11,6 +11,7 @@ env:
 
 permissions:
   id-token: write # Important for at least docker gha cache
+  contents: write
 
 jobs:
   release:
