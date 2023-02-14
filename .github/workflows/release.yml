@@ -9,6 +9,10 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: rust-ubuntu
 
+permissions:
+  id-token: write # Important for at least docker gha cache
+  contents: read
+
 jobs:
   release:
     runs-on: ubuntu-latest
