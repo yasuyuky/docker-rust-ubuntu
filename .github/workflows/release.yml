@@ -31,7 +31,7 @@ jobs:
           git tag -f -a ${tag_name} -m "${tag_name} Tagged by CI" || echo "not tagged"
         env:
           tag_name: ${{ steps.generate.outputs.version }}
-        if: ${{ matrix.os == 'bionic' }} && ${{ matrix.platform == 'linux/amd64' }}
+        if: ${{ matrix.os == 'bionic' && matrix.platform == 'linux/amd64' }}
       - name: Push changes
         uses: ad-m/github-push-action@master
         with:
@@ -39,7 +39,7 @@ jobs:
           force: true
           tags: true
           branch: ${{ github.ref }}
-        if: ${{ matrix.os == 'bionic' }} && ${{ matrix.platform == 'linux/amd64' }}
+        if: ${{ matrix.os == 'bionic' && matrix.platform == 'linux/amd64' }}
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
