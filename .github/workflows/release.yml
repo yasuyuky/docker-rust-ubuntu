@@ -58,7 +58,7 @@ jobs:
           context: .
           push: false
           cache-from: type=gha
-          cache-to: type=gha
+          cache-to: type=gha,mode=max
           platforms: ${{ matrix.platform }}
           build-args: dist=${{ matrix.os }}
 
