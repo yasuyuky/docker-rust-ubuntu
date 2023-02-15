@@ -14,6 +14,8 @@ permissions: write-all
 jobs:
   release:
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.generate.outputs.version }}
     strategy:
       matrix:
         os: [bionic, focal, jammy]
@@ -89,7 +91,7 @@ jobs:
           platforms: linux/amd64,linux/arm64,linux/arm/v7
           build-args: dist=${{ matrix.os }}
           tags: |
-            ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ matrix.os }}-${{ steps.generate.outputs.version }}
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ matrix.os }}-${{ needs.release.outputs.version }}
       - name: Build and push latest if bionic
         uses: docker/build-push-action@v3
         with:
@@ -100,5 +102,5 @@ jobs:
           build-args: dist=${{ matrix.os }}
           tags: |
             ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:latest
-            ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ steps.generate.outputs.version }}
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ needs.release.outputs.version }}
         if: ${{ matrix.os == 'bionic' }}
