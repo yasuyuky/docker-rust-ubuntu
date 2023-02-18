@@ -83,13 +83,13 @@ jobs:
         run: |
           docker run --platform ${{ matrix.platform }} \
           -v$(pwd)/${{ matrix.platform }}:/work \
-          ghcr.io/yasuyuky/rust-ubuntu:${{ needs.release.outputs.version }} \
+          ghcr.io/yasuyuky/rust-ubuntu:bionic-${{ needs.release.outputs.version }} \
           cargo install --target-dir=/work sccache
       - name: Build cargo-deb
         run: |
           docker run --platform ${{ matrix.platform }} \
           -v$(pwd)/${{ matrix.platform }}:/work \
-          ghcr.io/yasuyuky/rust-ubuntu:${{ needs.release.outputs.version }} \
+          ghcr.io/yasuyuky/rust-ubuntu:bionic-${{ needs.release.outputs.version }} \
           cargo install --target-dir=/work cargo-deb
       - name: Generate key name
         run: echo key=${{ matrix.platform }} | tr '/' '-' >>&GITHUB_OUTPUT
