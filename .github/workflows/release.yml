@@ -16,17 +16,11 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.generate.outputs.version }}
-    strategy:
-      matrix:
-        os: [bionic, focal, jammy]
-        platform: [linux/amd64, linux/arm64, linux/arm/v7]
     steps:
       - uses: actions/checkout@v1
-        with:
-          ref: ${{ github.head_ref }}
       - name: Generate Dockerfile
         id: generate
-        run: ./gen.sh ${{ matrix.os }}/Dockerfile.template
+        run: ./gen.sh Dockerfile.template
       - name: Commit files
         run: |
           git config --local user.email "yasuyuki.ymd@gmail.com"
@@ -35,7 +29,6 @@ jobs:
           git tag -f -a ${tag_name} -m "${tag_name} Tagged by CI" || echo "not tagged"
         env:
           tag_name: ${{ steps.generate.outputs.version }}
-        if: ${{ matrix.os == 'bionic' && matrix.platform == 'linux/amd64' }}
       - name: Push changes
         uses: ad-m/github-push-action@master
         with:
@@ -43,7 +36,19 @@ jobs:
           force: true
           tags: true
           branch: ${{ github.ref }}
-        if: ${{ matrix.os == 'bionic' && matrix.platform == 'linux/amd64' }}
+
+  build-push:
+    runs-on: ubuntu-latest
+    needs: release
+    strategy:
+      matrix:
+        os: [bionic, focal, jammy]
+        platform: [linux/amd64, linux/arm64, linux/arm/v7]
+    steps:
+      - uses: actions/checkout@v1
+      - name: Generate Dockerfile
+        id: generate
+        run: ./gen.sh Dockerfile.template
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
@@ -68,7 +73,7 @@ jobs:
 
   build-tools:
     runs-on: ubuntu-latest
-    needs: release
+    needs: [release, build-push]
     outputs:
       version: ${{ steps.generate-key.outputs.key }}
     strategy:
@@ -98,7 +103,7 @@ jobs:
 
   install-tools:
     runs-on: ubuntu-latest
-    needs: build-tools
+    needs: [release, build-tools]
     strategy:
       matrix:
         os: [bionic, focal, jammy]
