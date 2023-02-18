@@ -1,5 +1,5 @@
 ARG ver
 FROM ghcr.io/yasuyuky/rust-ubuntu:${ver}
 
-COPY $BUILDTARGET/release/sccache /usr/local/cargo/bin/sccache
-COPY $BUILDTARGET/release/cargo-deb /usr/local/cargo/bin/cargo-deb
+COPY $TARGETPLATFORM/release/sccache /usr/local/cargo/bin/sccache
+COPY $TARGETPLATFORM/release/cargo-deb /usr/local/cargo/bin/cargo-deb
