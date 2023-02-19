@@ -83,14 +83,14 @@ jobs:
         uses: docker/setup-qemu-action@v2
       - name: Build sccache
         run: |
-          docker run --platform ${{ matrix.platform }} \
+          docker run -m 2GB --platform ${{ matrix.platform }} \
           --mount=type=tmpfs,target=/usr/local/cargo/registry/ \
           -v$(pwd)/${{ matrix.platform }}:/work \
           ghcr.io/yasuyuky/rust-ubuntu:bionic-${{ needs.release.outputs.version }} \
           cargo install --target-dir=/work sccache
       - name: Build cargo-deb
         run: |
-          docker run --platform ${{ matrix.platform }} \
+          docker run -m 2GB --platform ${{ matrix.platform }} \
           --mount=type=tmpfs,target=/usr/local/cargo/registry/ \
           -v$(pwd)/${{ matrix.platform }}:/work \
           ghcr.io/yasuyuky/rust-ubuntu:bionic-${{ needs.release.outputs.version }} \
