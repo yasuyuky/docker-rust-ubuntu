@@ -96,7 +96,7 @@ jobs:
           ghcr.io/yasuyuky/rust-ubuntu:bionic-${{ needs.release.outputs.version }} \
           cargo install --target-dir=/work cargo-deb
       - name: Generate key name
-        run: echo key=${{ matrix.platform }} | tr '/' '-' >>&GITHUB_OUTPUT
+        run: echo key=${{ matrix.platform }} | tr '/' '-' >>$GITHUB_OUTPUT
         id: generate-key
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
