@@ -43,6 +43,7 @@ jobs:
     strategy:
       matrix:
         os: [bionic, focal, jammy]
+      max-parallel: 1
     steps:
       - uses: actions/checkout@v1
       - name: Generate Dockerfile
@@ -99,7 +100,7 @@ jobs:
         run: echo key=${{ matrix.platform }} | tr '/' '-' >>$GITHUB_OUTPUT
         id: generate-key
       - name: Clean up output files
-        run: find ${{ matrix.platform }} ! -name 'sccache' ! -name 'cargo-deb' -delete
+        run: sudo find ${{ matrix.platform }} ! -name 'sccache' ! -name 'cargo-deb' -delete
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
