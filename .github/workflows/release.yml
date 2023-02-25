@@ -87,7 +87,7 @@ jobs:
           --mount=type=tmpfs,target=/usr/local/cargo/registry/ \
           -v$(pwd)/${{ matrix.platform }}:/work \
           ghcr.io/yasuyuky/rust-ubuntu:bionic-${{ needs.release.outputs.version }} \
-          cargo install --target-dir=/work sccache
+          cargo install --target-dir=/work sccache --no-default-features --features=gha
       - name: Build cargo-deb
         run: |
           docker run -m 8GB --oom-kill-disable --platform ${{ matrix.platform }} \
