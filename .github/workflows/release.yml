@@ -81,13 +81,6 @@ jobs:
     steps:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
-      - name: Build sccache
-        run: |
-          docker run -m 6G --memory-swap 16G --platform ${{ matrix.platform }} \
-          --mount=type=tmpfs,target=/usr/local/cargo/registry/ \
-          -v$(pwd)/${{ matrix.platform }}:/work \
-          ghcr.io/yasuyuky/rust-ubuntu:bionic-${{ needs.release.outputs.version }} \
-          cargo install --target-dir=/work sccache --no-default-features --features=gha
       - name: Build cargo-deb
         run: |
           docker run -m 6G --memory-swap 16G --platform ${{ matrix.platform }} \
@@ -95,6 +88,13 @@ jobs:
           -v$(pwd)/${{ matrix.platform }}:/work \
           ghcr.io/yasuyuky/rust-ubuntu:bionic-${{ needs.release.outputs.version }} \
           cargo install --target-dir=/work cargo-deb
+      - name: Build sccache
+        run: |
+          docker run -m 6G --memory-swap 16G --platform ${{ matrix.platform }} \
+          --mount=type=tmpfs,target=/usr/local/cargo/registry/ \
+          -v$(pwd)/${{ matrix.platform }}:/work \
+          ghcr.io/yasuyuky/rust-ubuntu:bionic-${{ needs.release.outputs.version }} \
+          cargo install --target-dir=/work sccache --no-default-features --features=gha
       - name: Generate key name
         run: echo key=${{ matrix.platform }} | tr '/' '-' >>$GITHUB_OUTPUT
         id: generate-key
