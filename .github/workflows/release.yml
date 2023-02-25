@@ -83,13 +83,13 @@ jobs:
         uses: docker/setup-qemu-action@v2
       - name: Build cargo-deb
         run: |
-          docker run -m 6G --memory-swap 16G --platform ${{ matrix.platform }} \
+          docker run -m 4g --memory-swap 16g --platform ${{ matrix.platform }} \
           -v$(pwd)/${{ matrix.platform }}:/work \
           ghcr.io/yasuyuky/rust-ubuntu:bionic-${{ needs.release.outputs.version }} \
           cargo install --target-dir=/work cargo-deb
       - name: Build sccache
         run: |
-          docker run -m 6G --memory-swap 16G --platform ${{ matrix.platform }} \
+          docker run -m 4g --memory-swap 16g --platform ${{ matrix.platform }} \
           -v$(pwd)/${{ matrix.platform }}:/work \
           ghcr.io/yasuyuky/rust-ubuntu:bionic-${{ needs.release.outputs.version }} \
           cargo install --target-dir=/work sccache --no-default-features --features=gha
