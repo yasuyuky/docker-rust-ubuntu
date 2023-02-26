@@ -87,16 +87,16 @@ jobs:
           -v$(pwd)/target/${{ matrix.platform }}:/work \
           ghcr.io/yasuyuky/rust-ubuntu:bionic-${{ needs.release.outputs.version }} \
           cargo install --target-dir=/work cargo-deb
-          mkdir -p ${{ matrix.platform }}
-          cp target/${{ matrix.platform }}/release/cargo-deb ${{ matrix.platform }}
+          sudo mkdir -p ${{ matrix.platform }}
+          sudo cp target/${{ matrix.platform }}/release/cargo-deb ${{ matrix.platform }}
       - name: Build sccache
         run: |
           docker run -m 4g --memory-swap 16g --oom-kill-disable --platform ${{ matrix.platform }} \
           -v$(pwd)/target/${{ matrix.platform }}:/work \
           ghcr.io/yasuyuky/rust-ubuntu:bionic-${{ needs.release.outputs.version }} \
           cargo install --target-dir=/work sccache
-          mkdir -p ${{ matrix.platform }}
-          cp target/${{ matrix.platform }}/release/sccache ${{ matrix.platform }}
+          sudo mkdir -p ${{ matrix.platform }}
+          sudo cp target/${{ matrix.platform }}/release/sccache ${{ matrix.platform }}
       - name: Generate key name
         run: echo key=${{ matrix.platform }} | tr '/' '-' >>$GITHUB_OUTPUT
         id: generate-key
