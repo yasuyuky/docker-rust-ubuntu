@@ -1,5 +1,6 @@
+ARG dist
 ARG ver
-FROM ghcr.io/yasuyuky/rust-ubuntu:${ver}
+FROM ghcr.io/yasuyuky/rust-ubuntu:${dist}-${ver}
 ARG TARGETPLATFORM
 
 COPY $TARGETPLATFORM/sccache /usr/local/cargo/bin/sccache
