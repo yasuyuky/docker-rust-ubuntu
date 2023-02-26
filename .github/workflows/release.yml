@@ -117,6 +117,8 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           path: tools
+      - name: Deploy tool files
+        run: for n in $(ls -d linux*); do mkdir -p ${n//-/\/}; cp ${n}* ${n//-/\/}; done
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
