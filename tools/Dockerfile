@@ -5,3 +5,4 @@ ARG TARGETPLATFORM
 
 COPY $TARGETPLATFORM/sccache /usr/local/cargo/bin/sccache
 COPY $TARGETPLATFORM/cargo-deb /usr/local/cargo/bin/cargo-deb
+RUN chmod +x /usr/local/cargo/bin/sccache /usr/local/cargo/bin/cargo-deb
