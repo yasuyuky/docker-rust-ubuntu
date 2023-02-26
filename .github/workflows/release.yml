@@ -154,7 +154,7 @@ jobs:
         with:
           path: tools
       - name: Deploy tool files
-        run: for n in $(ls -d linux*); do mkdir -p ${n//-/\/}; cp ${n}* ${n//-/\/}; done
+        run: for n in $(ls -d tools/linux-*); do mkdir -p ${n//-/\/}; cp ${n}* ${n//-/\/}; done
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
