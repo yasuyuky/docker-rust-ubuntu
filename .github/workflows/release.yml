@@ -135,7 +135,9 @@ jobs:
           context: ./tools
           push: true
           platforms: linux/amd64,linux/arm64,linux/arm/v7
-          build-args: dist=${{ matrix.os }}
+          build-args: |
+            dist=${{ matrix.os }}
+            ver=${{ needs.release.outputs.version }}
           tags: |
             ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ matrix.os }}-${{ needs.release.outputs.version }}
       - name: Build and push latest if bionic
@@ -144,7 +146,9 @@ jobs:
           context: ./tools
           push: true
           platforms: linux/amd64,linux/arm64,linux/arm/v7
-          build-args: dist=${{ matrix.os }}
+          build-args: |
+            dist=${{ matrix.os }}
+            ver=${{ needs.release.outputs.version }}
           tags: |
             ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:latest
             ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ needs.release.outputs.version }}
