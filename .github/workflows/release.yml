@@ -84,20 +84,22 @@ jobs:
       - name: Build cargo-deb
         run: |
           docker run -m 4g --memory-swap 16g --oom-kill-disable --platform ${{ matrix.platform }} \
-          -v$(pwd)/${{ matrix.platform }}:/work \
+          -v$(pwd)/target/${{ matrix.platform }}:/work \
           ghcr.io/yasuyuky/rust-ubuntu:bionic-${{ needs.release.outputs.version }} \
           cargo install --target-dir=/work cargo-deb
+          mkdir -p ${{ matrix.platform }}
+          cp target/${{ matrix.platform }}/release/cargo-deb ${{ matrix.platform }}
       - name: Build sccache
         run: |
           docker run -m 4g --memory-swap 16g --oom-kill-disable --platform ${{ matrix.platform }} \
-          -v$(pwd)/${{ matrix.platform }}:/work \
+          -v$(pwd)/target/${{ matrix.platform }}:/work \
           ghcr.io/yasuyuky/rust-ubuntu:bionic-${{ needs.release.outputs.version }} \
-          cargo install --target-dir=/work sccache --no-default-features --features=gha
+          cargo install --target-dir=/work sccache
+          mkdir -p ${{ matrix.platform }}
+          cp target/${{ matrix.platform }}/release/sccache ${{ matrix.platform }}
       - name: Generate key name
         run: echo key=${{ matrix.platform }} | tr '/' '-' >>$GITHUB_OUTPUT
         id: generate-key
-      - name: Clean up output files
-        run: sudo find ${{ matrix.platform }} -type f ! -name 'sccache' ! -name 'cargo-deb' -delete
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
