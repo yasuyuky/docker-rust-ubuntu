@@ -14,3 +14,4 @@ RUN set -eux; \
     cargo --version; \
     rustc --version;
 
+COPY config.toml /.cargo/config.toml
