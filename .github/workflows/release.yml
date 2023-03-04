@@ -70,50 +70,14 @@ jobs:
           tags: |
             ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ matrix.os }}-${{ needs.release.outputs.version }}
 
-  build-tools-x64:
+  build-tools:
     runs-on: ubuntu-latest
     needs: [release, build-push]
     outputs:
       version: ${{ steps.generate-key.outputs.key }}
     strategy:
       matrix:
-        platform: [linux/amd64]
-    steps:
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
-      - name: Build cargo-deb
-        run: |
-          docker run -m 4g --memory-swap 16g --oom-kill-disable --platform ${{ matrix.platform }} \
-          -v$(pwd)/target/${{ matrix.platform }}:/work \
-          ghcr.io/yasuyuky/rust-ubuntu:bionic-${{ needs.release.outputs.version }} \
-          cargo install --target-dir=/work cargo-deb
-          sudo mkdir -p ${{ matrix.platform }}
-          sudo cp target/${{ matrix.platform }}/release/cargo-deb ${{ matrix.platform }}
-      - name: Build sccache
-        run: |
-          docker run -m 4g --memory-swap 16g --oom-kill-disable --platform ${{ matrix.platform }} \
-          -v$(pwd)/target/${{ matrix.platform }}:/work \
-          ghcr.io/yasuyuky/rust-ubuntu:bionic-${{ needs.release.outputs.version }} \
-          cargo install --target-dir=/work sccache
-          sudo mkdir -p ${{ matrix.platform }}
-          sudo cp target/${{ matrix.platform }}/release/sccache ${{ matrix.platform }}
-      - name: Generate key name
-        run: echo key=${{ matrix.platform }} | tr '/' '-' >>$GITHUB_OUTPUT
-        id: generate-key
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ steps.generate-key.outputs.key }}
-          path: ${{ matrix.platform }}
-
-  build-tools-arm:
-    runs-on: self-hosted
-    needs: [release, build-push]
-    outputs:
-      version: ${{ steps.generate-key.outputs.key }}
-    strategy:
-      matrix:
-        platform: [linux/arm64, linux/arm/v7]
+        platform: [linux/amd64, linux/arm64, linux/arm/v7]
     steps:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
@@ -144,7 +108,7 @@ jobs:
 
   install-tools:
     runs-on: ubuntu-latest
-    needs: [release, build-tools-x64, build-tools-arm]
+    needs: [release, build-tools]
     strategy:
       matrix:
         os: [bionic, focal, jammy]
