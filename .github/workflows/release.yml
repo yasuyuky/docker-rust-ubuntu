@@ -101,7 +101,7 @@ jobs:
         run: echo key=${{ matrix.platform }} | tr '/' '-' >>$GITHUB_OUTPUT
         id: generate-key
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: ${{ steps.generate-key.outputs.key }}
           path: ${{ matrix.platform }}
