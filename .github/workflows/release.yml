@@ -42,7 +42,7 @@ jobs:
     needs: release
     strategy:
       matrix:
-        os: [bionic, focal, jammy]
+        os: [focal, jammy, noble]
     steps:
       - uses: actions/checkout@v4
       - name: Generate Dockerfile
@@ -85,7 +85,7 @@ jobs:
         run: |
           docker run -m 4g --memory-swap 16g --oom-kill-disable --platform ${{ matrix.platform }} \
           -v$(pwd)/target/${{ matrix.platform }}:/work \
-          ghcr.io/yasuyuky/rust-ubuntu:bionic-${{ needs.release.outputs.version }} \
+          ghcr.io/yasuyuky/rust-ubuntu:focal-${{ needs.release.outputs.version }} \
           cargo install --target-dir=/work cargo-deb
           sudo mkdir -p ${{ matrix.platform }}
           sudo cp target/${{ matrix.platform }}/release/cargo-deb ${{ matrix.platform }}
@@ -93,7 +93,7 @@ jobs:
         run: |
           docker run -m 4g --memory-swap 16g --oom-kill-disable --platform ${{ matrix.platform }} \
           -v$(pwd)/target/${{ matrix.platform }}:/work \
-          ghcr.io/yasuyuky/rust-ubuntu:bionic-${{ needs.release.outputs.version }} \
+          ghcr.io/yasuyuky/rust-ubuntu:focal-${{ needs.release.outputs.version }} \
           cargo install --target-dir=/work sccache
           sudo mkdir -p ${{ matrix.platform }}
           sudo cp target/${{ matrix.platform }}/release/sccache ${{ matrix.platform }}
@@ -111,7 +111,7 @@ jobs:
     needs: [release, build-tools]
     strategy:
       matrix:
-        os: [bionic, focal, jammy]
+        os: [focal, jammy, noble]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v3
@@ -140,7 +140,7 @@ jobs:
             ver=${{ needs.release.outputs.version }}
           tags: |
             ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ matrix.os }}-${{ needs.release.outputs.version }}
-      - name: Build and push latest if bionic
+      - name: Build and push latest if focal
         uses: docker/build-push-action@v6
         with:
           context: ./tools
@@ -152,4 +152,4 @@ jobs:
           tags: |
             ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:latest
             ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ needs.release.outputs.version }}
-        if: ${{ matrix.os == 'bionic' }}
+        if: ${{ matrix.os == 'focal' }}
