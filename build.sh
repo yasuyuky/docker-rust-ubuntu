@@ -55,7 +55,7 @@ docker buildx build \
     --build-arg "ver=${VERSION}" \
     --tag "rust-ubuntu:$DIST-$VERSION-tools" \
     --load \
-    tools/
+    -f tools/Dockerfile .
 
 echo "Successfully built images:"
 echo "- rust-ubuntu:$DIST-$VERSION (base image)"
