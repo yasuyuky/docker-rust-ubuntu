@@ -1,4 +1,4 @@
-#!/bin/sh -eux
+#!/bin/sh -e
 
 # Default to focal if no distribution specified
 DIST=${1:-focal}
