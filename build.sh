@@ -16,12 +16,15 @@ fi
 # Get version for tagging
 VERSION=$(grep RUST_VERSION= Dockerfile | cut -d'=' -f2)
 
+# Set image name
+IMAGE_NAME="ghcr.io/yasuyuky/rust-ubuntu:$DIST-$VERSION"
+
 # Build base image
 echo "Building base image..."
 docker buildx build \
     --platform linux/$(uname -m) \
     --build-arg "dist=$DIST" \
-    --tag "rust-ubuntu:$DIST-$VERSION" \
+    --tag "$IMAGE_NAME" \
     --load \
     .
 
@@ -30,11 +33,19 @@ PLATFORM=linux/$(uname -m)
 mkdir -p target/${PLATFORM##*/}
 mkdir -p ${PLATFORM}
 
+# Build wild
+echo "Building wild..."
+docker run \
+    -v "$(pwd)/target/${PLATFORM##*/}:/work" \
+    "$IMAGE_NAME" \
+    cargo install --target-dir=/work --locked --bin --git https://github.com/davidlattimore/wild.git wild
+cp "target/${PLATFORM##*/}/release/wild" "${PLATFORM}/"
+
 # Build cargo-deb
 echo "Building cargo-deb..."
 docker run \
     -v "$(pwd)/target/${PLATFORM##*/}:/work" \
-    "rust-ubuntu:$DIST-$VERSION" \
+    "$IMAGE_NAME" \
     cargo install --target-dir=/work cargo-deb
 cp "target/${PLATFORM##*/}/release/cargo-deb" "${PLATFORM}/"
 
@@ -42,7 +53,7 @@ cp "target/${PLATFORM##*/}/release/cargo-deb" "${PLATFORM}/"
 echo "Building sccache..."
 docker run \
     -v "$(pwd)/target/${PLATFORM##*/}:/work" \
-    "rust-ubuntu:$DIST-$VERSION" \
+    "$IMAGE_NAME" \
     cargo install --target-dir=/work sccache
 cp "target/${PLATFORM##*/}/release/sccache" "${PLATFORM}/"
 
@@ -53,14 +64,9 @@ docker buildx build \
     --build-arg "TARGETPLATFORM=${PLATFORM}" \
     --build-arg "dist=${DIST}" \
     --build-arg "ver=${VERSION}" \
-    --tag "rust-ubuntu:$DIST-$VERSION-tools" \
+    --tag "$IMAGE_NAME" \
     --load \
     -f tools/Dockerfile .
 
-echo "Successfully built images:"
-echo "- rust-ubuntu:$DIST-$VERSION (base image)"
-echo "- rust-ubuntu:$DIST-$VERSION-tools (image with cargo-deb and sccache)"
-echo ""
-echo "You can run them with:"
-echo "docker run -it rust-ubuntu:$DIST-$VERSION"
-echo "docker run -it rust-ubuntu:$DIST-$VERSION-tools"
+echo "Successfully built the image:"
+echo " $IMAGE_NAME"
