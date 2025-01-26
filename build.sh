@@ -34,7 +34,7 @@ mkdir -p ${PLATFORM}
 echo "Building wild..."
 docker run \
     -v "$(pwd)/target/${PLATFORM##*/}:/work" \
-    "rust-ubuntu:$DIST-$VERSION" \
+    "ghcr.io/yasuyuky/rust-ubuntu:$DIST-$VERSION" \
     cargo install --target-dir=/work --locked --bin --git https://github.com/davidlattimore/wild.git wild
 cp "target/${PLATFORM##*/}/release/wild" "${PLATFORM}/"
 
@@ -42,7 +42,7 @@ cp "target/${PLATFORM##*/}/release/wild" "${PLATFORM}/"
 echo "Building cargo-deb..."
 docker run \
     -v "$(pwd)/target/${PLATFORM##*/}:/work" \
-    "rust-ubuntu:$DIST-$VERSION" \
+    "ghcr.io/yasuyuky/rust-ubuntu:$DIST-$VERSION" \
     cargo install --target-dir=/work cargo-deb
 cp "target/${PLATFORM##*/}/release/cargo-deb" "${PLATFORM}/"
 
@@ -50,7 +50,7 @@ cp "target/${PLATFORM##*/}/release/cargo-deb" "${PLATFORM}/"
 echo "Building sccache..."
 docker run \
     -v "$(pwd)/target/${PLATFORM##*/}:/work" \
-    "rust-ubuntu:$DIST-$VERSION" \
+    "ghcr.io/yasuyuky/rust-ubuntu:$DIST-$VERSION" \
     cargo install --target-dir=/work sccache
 cp "target/${PLATFORM##*/}/release/sccache" "${PLATFORM}/"
 
