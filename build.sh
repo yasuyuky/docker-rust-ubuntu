@@ -57,10 +57,5 @@ docker buildx build \
     --load \
     -f tools/Dockerfile .
 
-echo "Successfully built images:"
-echo "- rust-ubuntu:$DIST-$VERSION (base image)"
-echo "- rust-ubuntu:$DIST-$VERSION-tools (image with cargo-deb and sccache)"
-echo ""
-echo "You can run them with:"
-echo "docker run -it rust-ubuntu:$DIST-$VERSION"
-echo "docker run -it rust-ubuntu:$DIST-$VERSION-tools"
+echo "Successfully built the image:"
+echo " ghcr.io/yasuyuky/rust-ubuntu:$DIST-$VERSION"
