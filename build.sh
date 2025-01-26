@@ -21,7 +21,7 @@ echo "Building base image..."
 docker buildx build \
     --platform linux/$(uname -m) \
     --build-arg "dist=$DIST" \
-    --tag "rust-ubuntu:$DIST-$VERSION" \
+    --tag "ghcr.io/yasuyuky/rust-ubuntu:$DIST-$VERSION" \
     --load \
     .
 
@@ -53,7 +53,7 @@ docker buildx build \
     --build-arg "TARGETPLATFORM=${PLATFORM}" \
     --build-arg "dist=${DIST}" \
     --build-arg "ver=${VERSION}" \
-    --tag "rust-ubuntu:$DIST-$VERSION-tools" \
+    --tag "ghcr.io/yasuyuky/rust-ubuntu:$DIST-$VERSION" \
     --load \
     -f tools/Dockerfile .
 
