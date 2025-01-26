@@ -30,6 +30,14 @@ PLATFORM=linux/$(uname -m)
 mkdir -p target/${PLATFORM##*/}
 mkdir -p ${PLATFORM}
 
+# Build wild
+echo "Building wild..."
+docker run \
+    -v "$(pwd)/target/${PLATFORM##*/}:/work" \
+    "rust-ubuntu:$DIST-$VERSION" \
+    cargo install --target-dir=/work --locked --bin --git https://github.com/davidlattimore/wild.git wild
+cp "target/${PLATFORM##*/}/release/wild" "${PLATFORM}/"
+
 # Build cargo-deb
 echo "Building cargo-deb..."
 docker run \
