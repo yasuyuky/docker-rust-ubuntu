@@ -105,6 +105,7 @@ jobs:
         with:
           name: ${{ steps.generate-key.outputs.key }}
           path: ${{ matrix.platform }}
+          compression-level: 0
 
   install-tools:
     runs-on: ubuntu-latest
