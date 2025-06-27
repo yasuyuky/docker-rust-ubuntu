@@ -1,1 +1,1 @@
-FROM rust:1.87.0-bullseye
+FROM rust:1.88.0-bullseye
