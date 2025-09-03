@@ -181,10 +181,13 @@ jobs:
         include:
           - platform: linux/amd64
             runner: ubuntu-latest
+            prefix: "x86_64"
           - platform: linux/arm64
             runner: ubuntu-24.04-arm
+            prefix: "aarch64"
           - platform: linux/arm/v7
             runner: ubuntu-24.04-arm
+            prefix: "armv7"
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v5
@@ -217,12 +220,12 @@ jobs:
           tags: |
             ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ matrix.os }}-${{ needs.release.outputs.version }}
       - name: Export digest
-        run: echo ${{ steps.build.outputs.digest }} > final-${{ matrix.os }}-${{ matrix.platform }}.digest
+        run: echo ${{ steps.build.outputs.digest }} > final-${{ matrix.os }}-${{ matrix.prefix }}.digest
       - name: Upload digest artifact
         uses: actions/upload-artifact@v4
         with:
-          name: final-${{ matrix.os }}-${{ matrix.platform }}.digest
-          path: final-${{ matrix.os }}-${{ matrix.platform }}.digest
+          name: final-${{ matrix.os }}-${{ matrix.prefix }}.digest
+          path: final-${{ matrix.os }}-${{ matrix.prefix }}.digest
           retention-days: 1
 
   manifest-final:
