@@ -42,14 +42,14 @@ jobs:
     strategy:
       matrix:
         os: [focal, jammy, noble]
-        arch_group: [x86, arm]
+        platform: [linux/amd64, linux/arm64, linux/arm/v7]
         include:
-          - arch_group: x86
+          - platform: linux/amd64
             runner: ubuntu-latest
-            platforms: linux/amd64
-          - arch_group: arm
+          - platform: linux/arm64
             runner: ubuntu-24.04-arm
-            platforms: linux/arm64,linux/arm/v7
+          - platform: linux/arm/v7
+            runner: ubuntu-24.04-arm
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v5
@@ -66,20 +66,67 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build and push
+      - name: Build and push (base, single platform)
+        id: build
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          platforms: ${{ matrix.platforms }}
+          platforms: ${{ matrix.platform }}
           build-args: dist=${{ matrix.os }}
           tags: |
             ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ matrix.os }}-${{ needs.release.outputs.version }}
+      - name: Export digest
+        run: echo ${{ steps.build.outputs.digest }} > base-${{ matrix.os }}-${{ matrix.platform }}.digest
+      - name: Upload digest artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: base-${{ matrix.os }}-${{ matrix.platform }}.digest
+          path: base-${{ matrix.os }}-${{ matrix.platform }}.digest
+          retention-days: 1
+
+  manifest-base:
+    name: Assemble base manifests
+    needs: [release, build-push]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Download digest artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: base-*.digest
+          merge-multiple: true
+          path: digests
+      - name: Create multi-arch manifests for base images
+        env:
+          VER: ${{ needs.release.outputs.version }}
+        run: |
+          set -euo pipefail
+          repo="${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}"
+          for os in focal jammy noble; do
+            imgs=""
+            for f in digests/base-${os}-*.digest; do
+              [ -f "$f" ] || continue
+              d=$(cat "$f")
+              imgs="$imgs ${repo}@${d}"
+            done
+            if [ -n "$imgs" ]; then
+              echo "Assembling ${repo}:${os}-${VER} from: $imgs"
+              docker buildx imagetools create -t "${repo}:${os}-${VER}" $imgs
+            fi
+          done
 
   build-tools:
-    needs: [release, build-push]
+    needs: [release, build-push, manifest-base]
     outputs:
       version: ${{ steps.generate-key.outputs.key }}
     strategy:
@@ -123,18 +170,18 @@ jobs:
           compression-level: 0
 
   install-tools:
-    needs: [release, build-tools]
+    needs: [release, build-tools, manifest-base]
     strategy:
       matrix:
         os: [focal, jammy, noble]
-        arch_group: [x86, arm]
+        platform: [linux/amd64, linux/arm64, linux/arm/v7]
         include:
-          - arch_group: x86
+          - platform: linux/amd64
             runner: ubuntu-latest
-            platforms: linux/amd64
-          - arch_group: arm
+          - platform: linux/arm64
             runner: ubuntu-24.04-arm
-            platforms: linux/arm64,linux/arm/v7
+          - platform: linux/arm/v7
+            runner: ubuntu-24.04-arm
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v5
@@ -154,27 +201,76 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build and push
+      - name: Build and push (final, single platform)
+        id: build
         uses: docker/build-push-action@v6
         with:
           context: ./tools
           push: true
-          platforms: ${{ matrix.platforms }}
+          platforms: ${{ matrix.platform }}
           build-args: |
             dist=${{ matrix.os }}
             ver=${{ needs.release.outputs.version }}
           tags: |
             ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ matrix.os }}-${{ needs.release.outputs.version }}
-      - name: Build and push latest if focal
-        uses: docker/build-push-action@v6
+      - name: Export digest
+        run: echo ${{ steps.build.outputs.digest }} > final-${{ matrix.os }}-${{ matrix.platform }}.digest
+      - name: Upload digest artifact
+        uses: actions/upload-artifact@v4
         with:
-          context: ./tools
-          push: true
-          platforms: ${{ matrix.platforms }}
-          build-args: |
-            dist=${{ matrix.os }}
-            ver=${{ needs.release.outputs.version }}
-          tags: |
-            ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:latest
-            ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ needs.release.outputs.version }}
-        if: ${{ matrix.os == 'focal' }}
+          name: final-${{ matrix.os }}-${{ matrix.platform }}.digest
+          path: final-${{ matrix.os }}-${{ matrix.platform }}.digest
+          retention-days: 1
+
+  manifest-final:
+    name: Assemble final manifests
+    needs: [release, install-tools]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Download digest artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: final-*.digest
+          merge-multiple: true
+          path: digests
+      - name: Create multi-arch manifests for final images and aliases
+        env:
+          VER: ${{ needs.release.outputs.version }}
+        run: |
+          set -euo pipefail
+          repo="${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}"
+          # Per-dist tags
+          for os in focal jammy noble; do
+            imgs=""
+            for f in digests/final-${os}-*.digest; do
+              [ -f "$f" ] || continue
+              d=$(cat "$f")
+              imgs="$imgs ${repo}@${d}"
+            done
+            if [ -n "$imgs" ]; then
+              echo "Assembling ${repo}:${os}-${VER} from: $imgs"
+              docker buildx imagetools create -t "${repo}:${os}-${VER}" $imgs
+            fi
+          done
+          # Focal aliases: latest and plain version tag
+          focal_imgs=""
+          for f in digests/final-focal-*.digest; do
+            [ -f "$f" ] || continue
+            d=$(cat "$f")
+            focal_imgs="$focal_imgs ${repo}@${d}"
+          done
+          if [ -n "$focal_imgs" ]; then
+            echo "Assembling aliases :latest and :${VER} from focal images"
+            docker buildx imagetools create \
+              -t "${repo}:latest" \
+              -t "${repo}:${VER}" \
+              $focal_imgs
+          fi
