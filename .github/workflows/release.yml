@@ -119,15 +119,16 @@ jobs:
           set -euo pipefail
           repo="${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}"
           os="${{ matrix.os }}"
-          imgs=""
-          for f in digests/base-${os}-*.digest; do
-            [ -f "$f" ] || continue
-            d=$(cat "$f")
-            imgs="$imgs ${repo}@${d}"
+          # Collect digests (bash-specific: nullglob + arrays)
+          shopt -s nullglob
+          imgs=()
+          for f in digests/base-"${os}"-*.digest; do
+            read -r d <"$f"
+            imgs+=("${repo}@${d}")
           done
-          if [ -n "$imgs" ]; then
-            echo "Assembling ${repo}:${os}-${VER} from: $imgs"
-            docker buildx imagetools create -t "${repo}:${os}-${VER}" $imgs
+          if ((${#imgs[@]})); then
+            echo "Assembling ${repo}:${os}-${VER} from: ${imgs[*]}"
+            docker buildx imagetools create -t "${repo}:${os}-${VER}" "${imgs[@]}"
           else
             echo "No digests found for ${os}, skipping"
           fi
