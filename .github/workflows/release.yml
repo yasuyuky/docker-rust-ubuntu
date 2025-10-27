@@ -84,7 +84,7 @@ jobs:
       - name: Export digest
         run: echo ${{ steps.build.outputs.digest }} > base-${{ matrix.os }}-${{ matrix.prefix }}.digest
       - name: Upload digest artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: base-${{ matrix.os }}-${{ matrix.prefix }}.digest
           path: base-${{ matrix.os }}-${{ matrix.prefix }}.digest
@@ -171,7 +171,7 @@ jobs:
         run: echo key=${{ matrix.platform }} | tr '/' '-' >>$GITHUB_OUTPUT
         id: generate-key
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ${{ steps.generate-key.outputs.key }}
           path: ${{ matrix.platform }}
@@ -227,7 +227,7 @@ jobs:
       - name: Export digest
         run: echo ${{ steps.build.outputs.digest }} > final-${{ matrix.os }}-${{ matrix.prefix }}.digest
       - name: Upload digest artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: final-${{ matrix.os }}-${{ matrix.prefix }}.digest
           path: final-${{ matrix.os }}-${{ matrix.prefix }}.digest
