@@ -267,11 +267,20 @@ jobs:
               imgs="$imgs ${repo}@${d}"
             done
             if [ -n "$imgs" ]; then
-              echo "Assembling ${repo}:${os}-${VER} from: $imgs"
-              docker buildx imagetools create -t "${repo}:${os}-${VER}" $imgs
+              # For focal, add both os-version and plain version tags
+              if [ "$os" = "focal" ]; then
+                echo "Assembling ${repo}:${os}-${VER} and :${VER} from: $imgs"
+                docker buildx imagetools create \
+                  -t "${repo}:${os}-${VER}" \
+                  -t "${repo}:${VER}" \
+                  $imgs
+              else
+                echo "Assembling ${repo}:${os}-${VER} from: $imgs"
+                docker buildx imagetools create -t "${repo}:${os}-${VER}" $imgs
+              fi
             fi
           done
-          # Focal aliases: latest and plain version tag
+          # Focal aliases: latest tag
           focal_imgs=""
           for f in digests/final-focal-*.digest; do
             [ -f "$f" ] || continue
@@ -279,9 +288,8 @@ jobs:
             focal_imgs="$focal_imgs ${repo}@${d}"
           done
           if [ -n "$focal_imgs" ]; then
-            echo "Assembling aliases :latest and :${VER} from focal images"
+            echo "Assembling alias :latest from focal images"
             docker buildx imagetools create \
               -t "${repo}:latest" \
-              -t "${repo}:${VER}" \
               $focal_imgs
           fi
