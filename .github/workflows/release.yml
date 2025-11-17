@@ -212,6 +212,8 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Pull base image
+        run: docker pull --platform ${{ matrix.platform }} ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ matrix.os }}-${{ needs.release.outputs.version }}
       - name: Build and push (final, single platform)
         id: build
         uses: docker/build-push-action@v6
