@@ -1,0 +1,172 @@
+name: release-multistage
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: rust-ubuntu
+  DOCKERFILE: Dockerfile.multistage
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  # ========================================
+  # Job 1: Version management and tagging
+  # ========================================
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      rust_version: ${{ steps.extract.outputs.version }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Extract Rust version
+        id: extract
+        run: |
+          VERSION=$(grep FROM official/Dockerfile | cut -f 2 -d ':' | cut -f 1 -d '-')
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Rust version: ${VERSION}"
+
+      - name: Create and push tag
+        run: |
+          git config --local user.email "yasuyuki.ymd@gmail.com"
+          git config --local user.name "Yasuyuki YAMADA"
+          git tag -f -a ${VERSION} -m "Release ${VERSION}" || echo "Tag already exists"
+        env:
+          VERSION: ${{ steps.extract.outputs.version }}
+
+      - name: Push tags
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          force: true
+          tags: true
+
+  # ========================================
+  # Job 2: Multi-architecture build (parallel, native)
+  # ========================================
+  build:
+    needs: version
+    strategy:
+      matrix:
+        dist: [focal, jammy, noble]
+        platform: [linux/amd64, linux/arm64, linux/arm/v7]
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-latest
+            arch: amd64
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+            arch: arm64
+          - platform: linux/arm/v7
+            runner: ubuntu-24.04-arm
+            arch: armv7
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push (single platform)
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ env.DOCKERFILE }}
+          platforms: ${{ matrix.platform }}
+          push: true
+          cache-from: type=gha,scope=${{ matrix.dist }}-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.dist }}-${{ matrix.arch }}
+          build-args: |
+            DIST=${{ matrix.dist }}
+            RUST_VERSION=${{ needs.version.outputs.rust_version }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ matrix.dist }}-${{ needs.version.outputs.rust_version }}-${{ matrix.arch }}
+
+      - name: Export digest
+        run: |
+          mkdir -p /tmp/digests
+          echo "${{ steps.build.outputs.digest }}" > /tmp/digests/${{ matrix.dist }}-${{ matrix.arch }}.digest
+
+      - name: Upload digest
+        uses: actions/upload-artifact@v4
+        with:
+          name: digest-${{ matrix.dist }}-${{ matrix.arch }}
+          path: /tmp/digests/${{ matrix.dist }}-${{ matrix.arch }}.digest
+          retention-days: 1
+
+  # ========================================
+  # Job 3: Create multi-architecture manifests
+  # ========================================
+  manifest:
+    needs: [version, build]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        dist: [focal, jammy, noble]
+    steps:
+      - name: Download digests
+        uses: actions/download-artifact@v4
+        with:
+          pattern: digest-${{ matrix.dist }}-*
+          path: /tmp/digests
+          merge-multiple: true
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create multi-arch manifest
+        run: |
+          VER="${{ needs.version.outputs.rust_version }}"
+          REPO="${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}"
+          DIST="${{ matrix.dist }}"
+
+          # Collect image references by digest
+          images=""
+          for arch in amd64 arm64 armv7; do
+          digest_file="/tmp/digests/${DIST}-${arch}.digest"
+          if [ -f "$digest_file" ]; then
+            digest=$(cat "$digest_file")
+            images="$images ${REPO}@${digest}"
+          fi
+          done
+
+          if [ -n "$images" ]; then
+          echo "Creating manifest for ${DIST}-${VER} from: $images"
+          docker buildx imagetools create -t "${REPO}:${DIST}-${VER}" $images
+          fi
+
+      - name: Create version aliases (focal only)
+        if: matrix.dist == 'focal'
+        run: |
+          VER="${{ needs.version.outputs.rust_version }}"
+          REPO="${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}"
+
+          # focal-X.Y.Z already created above, now add X.Y.Z and latest
+          docker buildx imagetools create \
+          -t "${REPO}:${VER}" \
+          -t "${REPO}:latest" \
+          "${REPO}:focal-${VER}"
