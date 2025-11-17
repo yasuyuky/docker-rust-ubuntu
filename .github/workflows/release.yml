@@ -80,7 +80,7 @@ jobs:
           platforms: ${{ matrix.platform }}
           build-args: dist=${{ matrix.os }}
           tags: |
-            ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ matrix.os }}-${{ needs.release.outputs.version }}
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ matrix.os }}-${{ needs.release.outputs.version }}-${{ matrix.prefix }}
       - name: Export digest
         run: echo ${{ steps.build.outputs.digest }} > base-${{ matrix.os }}-${{ matrix.prefix }}.digest
       - name: Upload digest artifact
@@ -225,7 +225,7 @@ jobs:
             dist=${{ matrix.os }}
             ver=${{ needs.release.outputs.version }}
           tags: |
-            ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ matrix.os }}-${{ needs.release.outputs.version }}
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ matrix.os }}-${{ needs.release.outputs.version }}-${{ matrix.prefix }}
       - name: Export digest
         run: echo ${{ steps.build.outputs.digest }} > final-${{ matrix.os }}-${{ matrix.prefix }}.digest
       - name: Upload digest artifact
