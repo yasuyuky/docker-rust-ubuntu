@@ -23,7 +23,7 @@ jobs:
     outputs:
       rust_version: ${{ steps.extract.outputs.version }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Extract Rust version
         id: extract
@@ -68,7 +68,7 @@ jobs:
             arch: armv7
     runs-on: ${{ matrix.runner }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3

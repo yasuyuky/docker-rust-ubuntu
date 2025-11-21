@@ -15,7 +15,7 @@ jobs:
     outputs:
       version: ${{ steps.generate.outputs.version }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Generate Dockerfile
         id: generate
         run: ./gen.sh Dockerfile.template
@@ -53,7 +53,7 @@ jobs:
             prefix: "armv7"
     runs-on: ${{ matrix.runner }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Generate Dockerfile
         id: generate
         run: ./gen.sh Dockerfile.template
@@ -193,7 +193,7 @@ jobs:
             prefix: "armv7"
     runs-on: ${{ matrix.runner }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: actions/download-artifact@v6
         with:
           pattern: linux-*
