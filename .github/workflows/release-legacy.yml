@@ -28,7 +28,7 @@ jobs:
         env:
           tag_name: ${{ steps.generate.outputs.version }}
       - name: Push changes
-        uses: ad-m/github-push-action@master
+        uses: ad-m/github-push-action@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           force: true
