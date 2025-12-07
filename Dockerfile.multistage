@@ -27,6 +27,17 @@ RUN set -eux; \
 COPY config.toml ${CARGO_HOME}/config.toml
 
 # ========================================
+# Stage 2: Build wild-linker
+# ========================================
+FROM base AS builder-wild
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
+    --mount=type=cache,target=/usr/local/cargo/git \
+    --mount=type=cache,target=/tmp/target,sharing=locked \
+    set -eux; \
+    cargo install --target-dir=/tmp/target --locked wild-linker; \
+    cp /tmp/target/release/wild /usr/local/bin/wild
+
+# ========================================
 # Stage 2: Build sccache
 # ========================================
 FROM base AS builder-sccache
