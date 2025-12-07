@@ -25,5 +25,6 @@ docker run --rm --platform "linux/${ARCH}" "${IMAGE_NAME}" rustc --version
 docker run --rm --platform "linux/${ARCH}" "${IMAGE_NAME}" cargo --version
 docker run --rm --platform "linux/${ARCH}" "${IMAGE_NAME}" sccache --version
 docker run --rm --platform "linux/${ARCH}" "${IMAGE_NAME}" cargo-deb --version
+docker run --rm --platform "linux/${ARCH}" "${IMAGE_NAME}" wild --version
 
 echo "Build successful: ${IMAGE_NAME}"
