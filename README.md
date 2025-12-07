@@ -4,6 +4,7 @@ Build image for Rust based on Ubuntu
 
 With the following additional utilities:
 
+- [wild](https://github.com/davidlattimore/wild) - A very fast linker for Linux
 - [sccache](https://github.com/mozilla/sccache) - Shared compilation cache
 - [cargo-deb](https://github.com/kornelski/cargo-deb) - Debian package generator
 

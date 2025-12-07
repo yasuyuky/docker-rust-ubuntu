@@ -13,6 +13,12 @@ ENV RUSTUP_HOME=/usr/local/rustup \
     PATH=/usr/local/cargo/bin:$PATH \
     RUST_VERSION=${RUST_VERSION}
 
+# Install clang for use as the driver with wild linker on supported architectures.
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends clang; \
+    rm -rf /var/lib/apt/lists/*
+
 RUN set -eux; \
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- \
     -y \
@@ -24,10 +30,26 @@ RUN set -eux; \
     cargo --version; \
     rustc --version
 
-COPY config.toml ${CARGO_HOME}/config.toml
+# ========================================
+# Stage 2-1: Build wild-linker
+# ========================================
+FROM base AS builder-wild
+ARG TARGETARCH
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
+    --mount=type=cache,target=/usr/local/cargo/git \
+    --mount=type=cache,target=/tmp/target,sharing=locked \
+    set -eux; \
+    echo "Building wild-linker for TARGETARCH=$TARGETARCH"; \
+    if [ "$TARGETARCH" = "arm" ]; then \
+    printf "#!/bin/sh\nexec echo 'wild is skipped on TARGETARCH=%s'" "$TARGETARCH" > /usr/local/bin/wild; \
+    chmod +x /usr/local/bin/wild; \
+    else \
+    cargo install --target-dir=/tmp/target --locked wild-linker; \
+    cp /tmp/target/release/wild /usr/local/bin/wild; \
+    fi
 
 # ========================================
-# Stage 2: Build sccache
+# Stage 2-2: Build sccache
 # ========================================
 FROM base AS builder-sccache
 
@@ -39,7 +61,7 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry \
     cp /tmp/target/release/sccache /usr/local/bin/sccache
 
 # ========================================
-# Stage 3: Build cargo-deb
+# Stage 2-3: Build cargo-deb
 # ========================================
 FROM base AS builder-cargo-deb
 
@@ -51,14 +73,18 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry \
     cp /tmp/target/release/cargo-deb /usr/local/bin/cargo-deb
 
 # ========================================
-# Stage 4: Final image with tools
+# Stage 3: Final image with tools
 # ========================================
 FROM base AS final
+ARG TARGETARCH
 
+COPY --from=builder-wild /usr/local/bin/wild /usr/local/bin/wild
 COPY --from=builder-sccache /usr/local/bin/sccache /usr/local/cargo/bin/sccache
 COPY --from=builder-cargo-deb /usr/local/bin/cargo-deb /usr/local/cargo/bin/cargo-deb
+COPY config.toml ${CARGO_HOME}/config.toml
 
 RUN set -eux; \
     chmod +x /usr/local/cargo/bin/sccache /usr/local/cargo/bin/cargo-deb; \
     sccache --version; \
-    cargo-deb --version
+    cargo-deb --version; \
+    if [ "$TARGETARCH" != "arm" ]; then wild --version; else echo "wild skipped on TARGETARCH=$TARGETARCH"; fi
