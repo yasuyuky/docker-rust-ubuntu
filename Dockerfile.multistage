@@ -66,10 +66,12 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry \
 # ========================================
 FROM base AS final
 
+COPY --from=builder-wild /usr/local/bin/wild /usr/local/bin/wild
 COPY --from=builder-sccache /usr/local/bin/sccache /usr/local/cargo/bin/sccache
 COPY --from=builder-cargo-deb /usr/local/bin/cargo-deb /usr/local/cargo/bin/cargo-deb
 
 RUN set -eux; \
     chmod +x /usr/local/cargo/bin/sccache /usr/local/cargo/bin/cargo-deb; \
     sccache --version; \
-    cargo-deb --version
+    cargo-deb --version; \
+    wild --version
