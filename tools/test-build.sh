@@ -4,7 +4,7 @@
 # Example: ./tools/test-build.sh jammy amd64
 
 DIST=${1:-jammy}
-ARCH=${2:-amd64}
+ARCH=${2:-$(uname -m | sed 's/x86_64/amd64/; s/aarch64/arm64/')}
 VERSION=$(grep FROM official/Dockerfile | cut -f 2 -d ':' | cut -f 1 -d '-')
 IMAGE_NAME="ghcr.io/yasuyuky/rust-ubuntu:${DIST}-${VERSION}"
 PLATFORM="linux/${ARCH}"
