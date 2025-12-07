@@ -24,8 +24,6 @@ RUN set -eux; \
     cargo --version; \
     rustc --version
 
-COPY config.toml ${CARGO_HOME}/config.toml
-
 # ========================================
 # Stage 2: Build wild-linker
 # ========================================
@@ -77,6 +75,7 @@ ARG TARGETARCH
 COPY --from=builder-wild /usr/local/bin/wild /usr/local/bin/wild
 COPY --from=builder-sccache /usr/local/bin/sccache /usr/local/cargo/bin/sccache
 COPY --from=builder-cargo-deb /usr/local/bin/cargo-deb /usr/local/cargo/bin/cargo-deb
+COPY config.toml ${CARGO_HOME}/config.toml
 
 RUN set -eux; \
     chmod +x /usr/local/cargo/bin/sccache /usr/local/cargo/bin/cargo-deb; \
