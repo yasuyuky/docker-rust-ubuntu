@@ -49,6 +49,24 @@ check_ldconfig() {
     '
 }
 
+link_with_wild() {
+    docker run --rm --platform "${PLATFORM}" "${IMAGE_NAME}" sh -euxc '
+        tmp=$(mktemp -d);
+        cd "$tmp";
+        cat > main.rs <<"'"'"EOF"'"'";
+#[no_mangle]
+pub extern "C" fn answer() -> i32 { 42 }
+EOF
+        # compile a cdylib using clang driver with wild as linker path
+        rustc --crate-type=cdylib \
+              -C linker=clang \
+              -C link-arg=--ld-path=/usr/local/bin/wild \
+              main.rs \
+              -o libanswer.so;
+        ldd libanswer.so | tee /tmp/libanswer-ldd.txt;
+        grep "not found" /tmp/libanswer-ldd.txt && exit 1 || true;
+    '
+}
 
 run_in_image rustc --version
 run_in_image cargo --version
@@ -58,6 +76,7 @@ run_in_image cargo-deb --version
 if [ "${ARCH}" != "arm" ]; then
     run_in_image wild --version
     check_ldconfig
+    link_with_wild
 else
     run_in_image wild
 fi
