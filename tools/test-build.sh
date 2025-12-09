@@ -38,7 +38,17 @@ build_hello_world() {
 
 check_ldconfig() {
     docker run --rm --platform "${PLATFORM}" "${IMAGE_NAME}" sh -euxc '
-        libdir=$(llvm-config --libdir);
+        clang_ver=$(clang -dumpversion | cut -d. -f1);
+        libdir="/usr/lib/llvm-${clang_ver}/lib";
+        if [ ! -d "$libdir" ]; then
+            candidate=$(ldconfig -p | awk "/libLLVM/{print \$4;exit}");
+            if [ -n "$candidate" ]; then
+                libdir=$(dirname "$candidate");
+            else
+                libdir="";
+            fi;
+        fi;
+        [ -d "$libdir" ] || { echo "llvm libdir not found" >&2; exit 1; };
         # ensure ldconfig cache knows llvm libs so wild can locate them without LD_LIBRARY_PATH
         ldconfig -p | grep -F "$libdir";
         ldd /usr/local/bin/wild | tee /tmp/wild-ldd.txt;
@@ -53,7 +63,7 @@ link_with_wild() {
     docker run --rm --platform "${PLATFORM}" "${IMAGE_NAME}" sh -euxc '
         tmp=$(mktemp -d);
         cd "$tmp";
-        cat > main.rs <<"'"'"EOF"'"'";
+        cat > main.rs <<'EOF'
 #[no_mangle]
 pub extern "C" fn answer() -> i32 { 42 }
 EOF
