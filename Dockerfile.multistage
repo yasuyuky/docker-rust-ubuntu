@@ -16,7 +16,10 @@ ENV RUSTUP_HOME=/usr/local/rustup \
 # Install clang for use as the driver with wild linker on supported architectures.
 RUN set -eux; \
     apt-get update; \
-    apt-get install -y --no-install-recommends clang; \
+    apt-get install -y --no-install-recommends clang llvm; \
+    libdir=$(llvm-config --libdir); \
+    echo "$libdir" > /etc/ld.so.conf.d/llvm.conf; \
+    ldconfig; \
     rm -rf /var/lib/apt/lists/*
 
 RUN set -eux; \
