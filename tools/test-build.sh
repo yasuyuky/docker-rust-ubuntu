@@ -1,4 +1,4 @@
-#!/bin/sh -eux
+#!/bin/sh -eu
 
 # Usage: ./tools/test-build.sh [DIST] [ARCH]
 # Example: ./tools/test-build.sh jammy amd64
