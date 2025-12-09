@@ -36,6 +36,20 @@ build_hello_world() {
     '
 }
 
+check_ldconfig() {
+    docker run --rm --platform "${PLATFORM}" "${IMAGE_NAME}" sh -euxc '
+        libdir=$(llvm-config --libdir);
+        # ensure ldconfig cache knows llvm libs so wild can locate them without LD_LIBRARY_PATH
+        ldconfig -p | grep -F "$libdir";
+        ldd /usr/local/bin/wild | tee /tmp/wild-ldd.txt;
+        # fail if any dependency is unresolved
+        grep "not found" /tmp/wild-ldd.txt && exit 1 || true;
+        # optional: ensure at least one dependency is satisfied from the llvm libdir
+        grep -F "$libdir" /tmp/wild-ldd.txt || true;
+    '
+}
+
+
 run_in_image rustc --version
 run_in_image cargo --version
 run_in_image sccache --version
@@ -43,6 +57,7 @@ run_in_image cargo-deb --version
 
 if [ "${ARCH}" != "arm" ]; then
     run_in_image wild --version
+    check_ldconfig
 else
     run_in_image wild
 fi
