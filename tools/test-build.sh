@@ -1,4 +1,4 @@
-#!/bin/sh -eux
+#!/bin/sh -eu
 
 # Usage: ./tools/test-build.sh [DIST] [ARCH]
 # Example: ./tools/test-build.sh jammy amd64
@@ -36,6 +36,48 @@ build_hello_world() {
     '
 }
 
+check_ldconfig() {
+    docker run --rm --platform "${PLATFORM}" "${IMAGE_NAME}" sh -euxc '
+        clang_ver=$(clang -dumpversion | cut -d. -f1);
+        libdir="/usr/lib/llvm-${clang_ver}/lib";
+        if [ ! -d "$libdir" ]; then
+            candidate=$(ldconfig -p | awk "/libLLVM/{print \$4;exit}");
+            if [ -n "$candidate" ]; then
+                libdir=$(dirname "$candidate");
+            else
+                libdir="";
+            fi;
+        fi;
+        [ -d "$libdir" ] || { echo "llvm libdir not found" >&2; exit 1; };
+        # ensure ldconfig cache knows llvm libs so wild can locate them without LD_LIBRARY_PATH
+        ldconfig -p | grep -F "$libdir";
+        ldd /usr/local/bin/wild | tee /tmp/wild-ldd.txt;
+        # fail if any dependency is unresolved
+        grep "not found" /tmp/wild-ldd.txt && exit 1 || true;
+        # optional: ensure at least one dependency is satisfied from the llvm libdir
+        grep -F "$libdir" /tmp/wild-ldd.txt || true;
+    '
+}
+
+link_with_wild() {
+    docker run --rm --platform "${PLATFORM}" "${IMAGE_NAME}" sh -euxc '
+        tmp=$(mktemp -d);
+        cd "$tmp";
+        cat > main.rs <<'EOF'
+#[no_mangle]
+pub extern "C" fn answer() -> i32 { 42 }
+EOF
+        # compile a cdylib using clang driver with wild as linker path
+        rustc --crate-type=cdylib \
+              -C linker=clang \
+              -C link-arg=--ld-path=/usr/local/bin/wild \
+              main.rs \
+              -o libanswer.so;
+        ldd libanswer.so | tee /tmp/libanswer-ldd.txt;
+        grep "not found" /tmp/libanswer-ldd.txt && exit 1 || true;
+    '
+}
+
 run_in_image rustc --version
 run_in_image cargo --version
 run_in_image sccache --version
@@ -43,6 +85,8 @@ run_in_image cargo-deb --version
 
 if [ "${ARCH}" != "arm" ]; then
     run_in_image wild --version
+    check_ldconfig
+    link_with_wild
 else
     run_in_image wild
 fi

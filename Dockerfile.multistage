@@ -17,6 +17,15 @@ ENV RUSTUP_HOME=/usr/local/rustup \
 RUN set -eux; \
     apt-get update; \
     apt-get install -y --no-install-recommends clang; \
+    clang_ver=$(clang -dumpversion | cut -d. -f1); \
+    libdir="/usr/lib/llvm-${clang_ver}/lib"; \
+    if [ ! -d "$libdir" ]; then \
+    # fallback: pick the directory containing the first libLLVM in the cache
+    libdir=$(dirname "$(ldconfig -p | awk '/libLLVM/{print $4;exit}')"); \
+    fi; \
+    if [ ! -d "$libdir" ]; then echo "llvm libdir not found" >&2; exit 1; fi; \
+    echo "$libdir" > /etc/ld.so.conf.d/llvm.conf; \
+    ldconfig; \
     rm -rf /var/lib/apt/lists/*
 
 RUN set -eux; \
