@@ -41,10 +41,10 @@ docker pull ghcr.io/yasuyuky/rust-ubuntu:jammy-1.92.0
 
 ```bash
 # Build for current architecture
-./build-multistage.sh jammy amd64
+./build.sh jammy amd64
 
 # Build for ARM64
-./build-multistage.sh noble arm64
+./build.sh noble arm64
 ```
 
 ### Using the legacy template-based build
