@@ -65,4 +65,4 @@ The repository uses GitHub Actions to automatically build and push multi-archite
 - **Parallel builds**: Builds all distributions and architectures in parallel using native runners
 - **Manifest creation**: Combines platform-specific images into multi-arch manifests
 
-See `.github/workflows/release-multistage.yml` for details.
+See `.github/workflows/release.yml` for details.
