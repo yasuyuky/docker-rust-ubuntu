@@ -1,7 +1,7 @@
 #!/bin/sh -eux
 
-# Usage: ./build-multistage.sh [DIST] [ARCH]
-# Example: ./build-multistage.sh jammy arm64
+# Usage: ./build.sh [DIST] [ARCH]
+# Example: ./build.sh jammy arm64
 
 DIST=${1:-jammy}
 ARCH=${2:-$(uname -m | sed 's/x86_64/amd64/; s/aarch64/arm64/')}
