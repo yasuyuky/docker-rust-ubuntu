@@ -15,6 +15,7 @@ ENV RUSTUP_HOME=/usr/local/rustup \
     RUST_VERSION=${RUST_VERSION}
 
 # Install clang for use as the driver with wild linker on supported architectures.
+# skipcq: DOK-DL3008
 RUN apt-get update; \
     apt-get install -y --no-install-recommends clang llvm; \
     libdir=$(llvm-config --libdir); \
