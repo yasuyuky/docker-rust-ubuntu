@@ -15,16 +15,14 @@ ENV RUSTUP_HOME=/usr/local/rustup \
     RUST_VERSION=${RUST_VERSION}
 
 # Install clang for use as the driver with wild linker on supported architectures.
-RUN set -eux; \
-    apt-get update; \
+RUN apt-get update; \
     apt-get install -y --no-install-recommends clang llvm; \
     libdir=$(llvm-config --libdir); \
     echo "$libdir" > /etc/ld.so.conf.d/llvm.conf; \
     ldconfig; \
     rm -rf /var/lib/apt/lists/*
 
-RUN set -eux; \
-    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- \
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- \
     -y \
     --no-modify-path \
     --profile minimal \
@@ -87,8 +85,7 @@ COPY --from=builder-sccache /usr/local/bin/sccache /usr/local/cargo/bin/sccache
 COPY --from=builder-cargo-deb /usr/local/bin/cargo-deb /usr/local/cargo/bin/cargo-deb
 COPY config.toml ${CARGO_HOME}/config.toml
 
-RUN set -eux; \
-    chmod +x /usr/local/cargo/bin/sccache /usr/local/cargo/bin/cargo-deb; \
+RUN chmod +x /usr/local/cargo/bin/sccache /usr/local/cargo/bin/cargo-deb; \
     sccache --version; \
     cargo-deb --version; \
     if [ "$TARGETARCH" != "arm" ]; then wild --version; else echo "wild skipped on TARGETARCH=$TARGETARCH"; fi
