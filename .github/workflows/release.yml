@@ -1,4 +1,4 @@
-name: release-multistage
+name: release
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: rust-ubuntu
-  DOCKERFILE: Dockerfile.multistage
+  DOCKERFILE: Dockerfile
 
 permissions:
   contents: write
