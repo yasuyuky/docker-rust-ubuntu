@@ -6,6 +6,7 @@ ARG RUST_VERSION
 # Stage 1: Base Rust environment
 # ========================================
 FROM buildpack-deps:${DIST} AS base
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 ARG RUST_VERSION
 ENV RUSTUP_HOME=/usr/local/rustup \
