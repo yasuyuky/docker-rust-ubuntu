@@ -15,7 +15,7 @@ docker buildx build \
     --platform "${PLATFORM}" \
     --build-arg DIST="${DIST}" \
     --build-arg RUST_VERSION="${VERSION}" \
-    --file Dockerfile.multistage \
+    --file Dockerfile \
     --tag "${IMAGE_NAME}" \
     --load \
     .
