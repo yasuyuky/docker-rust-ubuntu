@@ -30,7 +30,7 @@ jobs:
       - name: Update README version examples
         run: ./tools/update-readme.sh
 
-      - name: Commit README if needed
+      - name: Ensure README is up to date
         run: |
           readme_clean() {
             git diff --quiet -- README.md && git diff --cached --quiet -- README.md
@@ -69,6 +69,7 @@ jobs:
           done
 
           echo "Failed to push README update after 3 attempts" >&2
+          echo "ERROR: README.md is out of date. Please run ./tools/update-readme.sh and commit the changes before pushing."
           exit 1
 
       - name: Extract Rust version
