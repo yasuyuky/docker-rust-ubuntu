@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - README.md
 
 env:
   REGISTRY: ghcr.io
@@ -25,10 +27,55 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Update README version examples
+        run: ./tools/update-readme.sh
+
+      - name: Ensure README is up to date
+        run: |
+          readme_clean() {
+            git diff --quiet -- README.md && git diff --cached --quiet -- README.md
+          }
+
+          VERSION=$(grep '^FROM rust:' official/Dockerfile | cut -f 2 -d ':' | cut -f 1 -d '-')
+
+          if readme_clean; then
+            exit 0
+          fi
+
+          git config --local user.email "yasuyuki.ymd@gmail.com"
+          git config --local user.name "Yasuyuki YAMADA"
+
+          git add README.md
+          git commit -m "Update README for Rust ${VERSION}"
+
+          attempt=1
+          while [ "${attempt}" -le 3 ]; do
+            if git push origin HEAD:${GITHUB_REF_NAME}; then
+              exit 0
+            fi
+
+            git fetch origin "${GITHUB_REF_NAME}"
+            git reset --soft "origin/${GITHUB_REF_NAME}"
+            ./tools/update-readme.sh
+            VERSION=$(grep '^FROM rust:' official/Dockerfile | cut -f 2 -d ':' | cut -f 1 -d '-')
+
+            if readme_clean; then
+              exit 0
+            fi
+
+            git add README.md
+            git commit -m "Update README for Rust ${VERSION}"
+            attempt=$((attempt + 1))
+          done
+
+          echo "Failed to push README update after 3 attempts" >&2
+          echo "ERROR: README.md is out of date. Please run ./tools/update-readme.sh and commit the changes before pushing."
+          exit 1
+
       - name: Extract Rust version
         id: extract
         run: |
-          VERSION=$(grep FROM official/Dockerfile | cut -f 2 -d ':' | cut -f 1 -d '-')
+          VERSION=$(grep '^FROM rust:' official/Dockerfile | cut -f 2 -d ':' | cut -f 1 -d '-')
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
           echo "Rust version: ${VERSION}"
 
