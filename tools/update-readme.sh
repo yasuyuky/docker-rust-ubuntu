@@ -20,6 +20,7 @@ awk \
     BEGIN {
         in_block = 0
         replaced = 0
+        end_seen = 0
     }
     $0 == start {
         print
@@ -40,6 +41,7 @@ awk \
     }
     $0 == end {
         in_block = 0
+        end_seen = 1
         print
         next
     }
@@ -49,6 +51,9 @@ awk \
     END {
         if (!replaced) {
             exit 2
+        }
+        if (!end_seen) {
+            exit 3
         }
     }
     ' "$README" > "$TMP"
