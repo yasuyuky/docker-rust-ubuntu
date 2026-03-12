@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - README.md
 
 env:
   REGISTRY: ghcr.io
@@ -25,10 +27,26 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Update README version examples
+        run: ./tools/update-readme.sh
+
+      - name: Commit README if needed
+        run: |
+          if git diff --quiet -- README.md; then
+            exit 0
+          fi
+
+          VERSION=$(grep '^FROM rust:' official/Dockerfile | cut -f 2 -d ':' | cut -f 1 -d '-')
+          git config --local user.email "yasuyuki.ymd@gmail.com"
+          git config --local user.name "Yasuyuki YAMADA"
+          git add README.md
+          git commit -m "Update README for Rust ${VERSION}"
+          git push origin HEAD:${GITHUB_REF_NAME}
+
       - name: Extract Rust version
         id: extract
         run: |
-          VERSION=$(grep FROM official/Dockerfile | cut -f 2 -d ':' | cut -f 1 -d '-')
+          VERSION=$(grep '^FROM rust:' official/Dockerfile | cut -f 2 -d ':' | cut -f 1 -d '-')
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
           echo "Rust version: ${VERSION}"
 
