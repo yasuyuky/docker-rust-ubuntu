@@ -3,7 +3,13 @@
 README=${1:-README.md}
 START_MARKER='<!-- BEGIN AUTO-GENERATED VERSION USAGE -->'
 END_MARKER='<!-- END AUTO-GENERATED VERSION USAGE -->'
-VERSION=$(grep '^FROM rust:' official/Dockerfile | cut -f 2 -d ':' | cut -f 1 -d '-')
+VERSION_LINE=$(grep '^FROM rust:' official/Dockerfile || true)
+if [ -z "$VERSION_LINE" ]; then
+    echo "Failed to determine Rust version from official/Dockerfile" >&2
+    exit 1
+fi
+VERSION=${VERSION_LINE#*:}
+VERSION=${VERSION%%-*}
 TMP=$(mktemp)
 
 cleanup() {
