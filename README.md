@@ -27,14 +27,14 @@ docker pull ghcr.io/yasuyuky/rust-ubuntu:latest
 Or specify a distribution and version:
 
 ```bash
-docker pull ghcr.io/yasuyuky/rust-ubuntu:jammy-1.95.0
+docker pull ghcr.io/yasuyuky/rust-ubuntu:jammy-1.96.0
 ```
 
 ## Available Tags
 
 - `latest` - Latest Rust on Ubuntu Focal (20.04)
-- `<VERSION>` - Specific Rust version on Focal (e.g., `1.95.0`)
-- `<DIST>-<VERSION>` - Specific distribution and version (e.g., `jammy-1.95.0`, `noble-1.95.0`)
+- `<VERSION>` - Specific Rust version on Focal (e.g., `1.96.0`)
+- `<DIST>-<VERSION>` - Specific distribution and version (e.g., `jammy-1.96.0`, `noble-1.96.0`)
 <!-- END AUTO-GENERATED VERSION USAGE -->
 
 ## Building Locally
